@@ -1,0 +1,126 @@
+FROM nvidia/cuda:12.4.1-cudnn8-devel-ubuntu22.04 AS builder
+
+# 切换 apt 源到清华
+RUN sed -i 's@http://archive.ubuntu.com@https://mirrors.tuna.tsinghua.edu.cn@g' /etc/apt/sources.list && \
+    sed -i 's@http://security.ubuntu.com@https://mirrors.tuna.tsinghua.edu.cn@g' /etc/apt/sources.list
+
+WORKDIR /app
+
+# 安装 Python 3.10 及其开发工具，并设置为默认
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.10 \
+    python3.10-dev \
+    python3.10-distutils \
+    python3-pip \
+    build-essential \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/* \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1 \
+    && update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 
+
+# 安装构建依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libjpeg-dev \
+    zlib1g-dev \
+    libpq-dev \
+    libffi-dev \
+    libgl1 \
+    libglib2.0-0 \
+    wget \
+    antiword \
+    curl \
+    unzip \
+    git \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 检查是否存在本地protoc安装包，如果存在则离线安装，否则在线安装,其他安装包按需求添加
+COPY packages/protoc-3.19.4-linux-x86_64.zip /app/packages/protoc-3.19.4-linux-x86_64.zip
+RUN echo "检查本地protoc安装包..." && \
+    if [ -f "/app/packages/protoc-3.19.4-linux-x86_64.zip" ]; then \
+        echo "发现本地protoc安装包，将进行离线安装"; \
+        cp /app/packages/protoc-*.zip /app/ && \
+        unzip -o /app/protoc-*.zip -d /usr/local && \
+        chmod +x /usr/local/bin/protoc && \
+        rm -f /app/protoc-*.zip; \
+    else \
+        echo "未发现本地protoc安装包，将进行在线安装"; \
+        curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.19.4/protoc-3.19.4-linux-x86_64.zip && \
+        unzip -o protoc-3.19.4-linux-x86_64.zip -d /usr/local && \
+        chmod +x /usr/local/bin/protoc && \
+        rm -f protoc-3.19.4-linux-x86_64.zip; \
+    fi
+
+# 复制依赖文件
+COPY services/docreader/requirements.txt .
+
+# 安装依赖
+RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple 
+RUN pip install --upgrade pip -i https://mirrors.aliyun.com/pypi/simple
+# 安装 PyTorch 
+# 从 PyTorch 2.0 左右开始，PyTorch 改变了其分发方式。它不再强依赖于您在系统或 Docker 镜像中预先安装的完整 CUDA 工具包 (CUDA Toolkit)，而是将自己运行所需要的
+# 特定版本的 CUDA 库作为 Python 包依赖项，在安装 torch 时一起安装到您的 Python 环境中。
+COPY packages/whl/ /app/wheels/
+RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple \
+    /app/wheels/torch-2.6.0+cu124-cp310-cp310-linux_x86_64.whl \
+    /app/wheels/torchaudio-2.6.0+cu124-cp310-cp310-linux_x86_64.whl \
+    /app/wheels/torchvision-0.21.0+cu124-cp310-cp310-linux_x86_64.whl
+RUN pip install -U "mineru[core]" -i https://mirrors.aliyun.com/pypi/simple 
+# 预下载 PP-OCRv5 模型
+RUN mkdir -p /root/.paddlex/official_models && \
+    wget https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_server_det_infer.tar \
+        -O /root/.paddlex/official_models/PP-OCRv5_server_det_infer.tar && \
+    wget https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_server_rec_infer.tar \
+        -O /root/.paddlex/official_models/PP-OCRv5_server_rec_infer.tar && \
+    tar -xf /root/.paddlex/official_models/PP-OCRv5_server_det_infer.tar -C /root/.paddlex/official_models/ && \
+    tar -xf /root/.paddlex/official_models/PP-OCRv5_server_rec_infer.tar -C /root/.paddlex/official_models/ && \
+    rm -rf /root/.paddlex/official_models/PP-OCRv5_server_det_infer.tar /root/.paddlex/official_models/PP-OCRv5_server_rec_infer.tar
+
+# 复制源代码和生成脚本
+COPY services/docreader/src/ /app/src/
+COPY services/docreader/scripts/ /app/scripts/
+
+# 确保模型目录存在
+RUN ls -la /root/.paddlex/official_models
+
+# 生成 protobuf 代码
+RUN chmod +x /app/scripts/generate_proto.sh && bash /app/scripts/generate_proto.sh
+
+# 安装 Playwright 浏览器
+RUN python -m playwright install webkit
+RUN python -m playwright install-deps webkit
+
+
+#Numpy&&Pandas兼容 MinerU 要求numpy >=1.21.6 PaddleX 要求numpy >=1.24
+RUN pip install numpy==1.24.4 pandas==2.0.3 -i https://mirrors.aliyun.com/pypi/simple 
+
+
+# 设置 Python 路径
+ENV PYTHONPATH=/app/src
+RUN cd /app/src && python -m download_deps
+
+# 创建supervisor配置
+RUN apt-get install -y supervisor
+RUN mkdir -p /etc/supervisor/conf.d
+COPY services/docreader/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+#复制文件
+COPY services/docreader/mineru.json /root/mineru.json
+COPY models/models.tar  /app/models.tar
+# 定义正确的模型仓库目录名 
+ENV CACHE_ROOT=/root/.cache/modelscope/hub
+# 解压模型到正确的结构
+RUN mkdir -p ${CACHE_ROOT}
+RUN tar -xzvf /app/models.tar -C ${CACHE_ROOT}
+RUN rm -f /app/models.tar
+#配置MinerU环境变量
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV MINERU_DEVICE_MODE=cuda
+# 暴露 gRPC 端口
+EXPOSE 50051
+
+# 使用supervisor启动服务
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

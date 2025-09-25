@@ -1,0 +1,26 @@
+grpcio
+grpcio-tools
+protobuf
+python-docx
+requests
+Pillow
+beautifulsoup4
+lxml
+playwright
+asyncio
+urllib3
+markdownify
+mistletoe
+goose3[all]
+paddleocr==3.0.0
+markdown
+antiword
+openai
+ollama
+minio
+
+--extra-index-url https://www.paddlepaddle.org.cn/packages/stable/cpu/
+paddlepaddle==3.0.0
+
+# --extra-index-url https://www.paddlepaddle.org.cn/packages/stable/cu126/
+# paddlepaddle-gpu==3.0.0 

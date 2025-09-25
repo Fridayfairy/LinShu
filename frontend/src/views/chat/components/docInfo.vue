@@ -1,0 +1,177 @@
+<template>
+    <div class="refer">
+        <div class="refer_header" @click="referBoxSwitch" v-if="session.knowledge_references && session.knowledge_references.length">
+            <div class="refer_title">
+                <img src="@/assets/img/ziliao.svg" alt="" />
+                <span>参考了{{ session.knowledge_references && session.knowledge_references.length }}个相关内容</span>
+            </div>
+            <div class="refer_show_icon">
+                <t-icon :name="showReferBox ? 'chevron-up' : 'chevron-down'" />
+            </div>
+        </div>
+        <div class="refer_box" v-show="showReferBox">
+            <div v-for="(item, index) in session.knowledge_references" :key="index">
+                <t-popup overlayClassName="refer-to-layer" placement="bottom-left" width="400" :showArrow="false"
+                    trigger="click">
+                    <template #content>
+                        <div class="doc_content">
+                            <div v-html="item.content.replace(/\n/g, '<br/>')"></div>
+                        </div>
+                    </template>
+                    <span class="doc">
+                        {{ session.knowledge_references.length < 2 ? item.knowledge_title : `${index +
+                            1}.${item.knowledge_title}` }} </span>
+                </t-popup>
+            </div>
+        </div>
+    </div>
+</template>
+<script setup>
+import { onMounted, defineProps, computed, ref, reactive } from "vue";
+const props = defineProps({
+    // 必填项
+    content: {
+        type: String,
+        required: false
+    },
+    session: {
+        type: Object,
+        required: false
+    }
+});
+const showReferBox = ref(false);
+const referBoxSwitch = () => {
+    showReferBox.value = !showReferBox.value;
+};
+
+</script>
+<style lang="less" scoped>
+.refer {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    width: 100%;
+    border-radius: 2px;
+    background-color: #30323605;
+    overflow: hidden;
+    box-sizing: border-box;
+
+    .refer_header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px;
+        color: #00000099;
+
+        .refer_title {
+            display: flex;
+            align-items: center;
+
+            img {
+                width: 16px;
+                height: 16px;
+                color: #07c05f;
+                fill: currentColor;
+                margin-right: 6px;
+            }
+
+            span {
+                white-space: nowrap;
+            }
+        }
+
+        .refer_show_icon {
+            font-size: 14px;
+            padding: 0 2px 1px 2px;
+        }
+    }
+
+    .refer_header:hover {
+        border-radius: 2px;
+        background-color: #30323605;
+        cursor: pointer;
+    }
+
+    .refer_box {
+        padding: 2px 4px 4px 4px;
+        flex-direction: column;
+    }
+}
+
+.doc_content {
+    max-height: 400px;
+    overflow: auto;
+    font-size: 14px;
+    color: #000000e6;
+    line-height: 23px;
+    text-align: justify;
+    border: 1px solid #07c05f33;
+    padding: 8px;
+}
+
+.doc {
+    text-decoration: underline;
+    color: #366ef4;
+    cursor: pointer;
+    display: inline-block;
+    white-space: nowrap;
+    max-width: calc(100% - 24px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 20px;
+}
+</style>
+
+<style>
+.refer-to-layer {
+    width: 400px;
+}
+
+/* 科技风格文档信息适配 */
+.tech-bot-msg .refer {
+    background-color: var(--tech-bg-secondary) !important;
+    border: 1px solid var(--tech-border);
+    border-radius: 8px;
+}
+
+.tech-bot-msg .refer_header {
+    color: var(--tech-text-secondary) !important;
+}
+
+.tech-bot-msg .refer_header:hover {
+    background-color: var(--tech-bg-hover) !important;
+}
+
+.tech-bot-msg .doc_content {
+    color: var(--tech-text-primary) !important;
+    border: 1px solid var(--tech-primary) !important;
+    background: var(--tech-bg-card) !important;
+    border-radius: 8px;
+    box-shadow: var(--tech-shadow-md);
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+.tech-bot-msg .doc {
+    color: var(--tech-primary) !important;
+    text-decoration-color: var(--tech-primary);
+}
+
+/* 科技风格弹出层样式优化 */
+:root[theme-mode="tech-dark"] .refer-to-layer .t-popup__content {
+    background: var(--tech-bg-card) !important;
+    border: 1px solid var(--tech-primary) !important;
+    border-radius: 8px !important;
+    box-shadow: var(--tech-shadow-lg), 0 0 20px rgba(0, 212, 255, 0.1) !important;
+    backdrop-filter: blur(10px);
+}
+
+:root[theme-mode="tech-dark"] .refer-to-layer .doc_content {
+    color: var(--tech-text-primary) !important;
+    background: transparent !important;
+    border: none !important;
+    font-size: 14px;
+    line-height: 1.6;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+</style>
