@@ -51,11 +51,11 @@
           </div>
         </div>
 
-        <!-- B下：占位区域 -->
-        <div class="placeholder-section">
-          <h3 class="section-title">占位区域</h3>
-          <div class="placeholder-content">
-            <p>后续开发功能区域</p>
+        <!-- B下：天气展示 -->
+        <div class="weather-section">
+          <h3 class="section-title">天气信息</h3>
+          <div class="weather-container">
+            <WeatherWidget />
           </div>
         </div>
       </div>
@@ -192,6 +192,7 @@ import { useRouter } from 'vue-router'
 import AMapLoader from '@amap/amap-jsapi-loader'
 import { getChatRecordById, getAllChatRecords, type ChatDBRecord, type ChatDBListResponse } from '@/api/chatdb/index'
 import ImageGallery from '@/components/ImageGallery.vue'
+import WeatherWidget from '@/components/WeatherWidget.vue'
 
 const router = useRouter()
 
@@ -798,7 +799,7 @@ onMounted(async () => {
   min-height: 0;
 }
 
-.placeholder-section {
+.weather-section {
   background: rgba(0, 212, 255, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(0, 212, 255, 0.3);
@@ -811,21 +812,10 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.placeholder-content {
+.weather-container {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(30, 41, 59, 0.5);
-  border-radius: 0.4rem;
-  border: 2px dashed rgba(0, 212, 255, 0.3);
   min-height: 0;
-}
-
-.placeholder-content p {
-  color: #64748b;
-  font-size: 0.9rem;
-  margin: 0;
+  overflow: hidden;
 }
 
 /* 右侧区域C */
