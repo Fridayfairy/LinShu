@@ -78,7 +78,7 @@
               </div>
               
               <!-- 体感 -->
-              <div class="weather-item">
+              <!-- <div class="weather-item">
                 <div class="weather-icon">🌡️</div>
                 <div class="weather-info">
                   <div class="temperature" :style="{ color: getTemperatureColor(parseFloat(weatherData.current?.temperature || '0')) }">
@@ -86,7 +86,7 @@
                   </div>
                   <div class="weather-desc">体感</div>
                 </div>
-              </div>
+              </div> -->
             </div>
           </div>
 
@@ -423,7 +423,7 @@ onMounted(() => {
 
 .forecast-date {
   color: #94a3b8;
-  font-size: 0.6rem;
+  font-size: 0.9rem;
 }
 
 .forecast-week {
@@ -433,13 +433,13 @@ onMounted(() => {
 
 .forecast-weather {
   color: #e2e8f0;
-  font-size: 0.65rem;
+  font-size: 0.9rem;
 }
 
 .forecast-temp {
-  color: #ff6b6b;
+  color: #e2e8f0;
   font-weight: 600;
-  font-size: 0.65rem;
+  font-size: 0.9rem;
 }
 
 /* 无数据状态 */

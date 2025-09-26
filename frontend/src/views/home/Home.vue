@@ -16,11 +16,11 @@
           </div>
           <div class="stat-card">
             <div class="stat-number">{{ stats.placeholder1 }}</div>
-            <div class="stat-label">占位1</div>
+            <div class="stat-label">状态评分</div>
           </div>
           <div class="stat-card">
             <div class="stat-number">{{ stats.placeholder2 }}</div>
-            <div class="stat-label">占位2</div>
+            <div class="stat-label">S1数目</div>
           </div>
         </div>
 
@@ -674,9 +674,11 @@ onMounted(async () => {
 .left-section {
   display: grid;
   grid-template-rows: 140px 1fr 200px;
-  gap: 1rem;
+  gap: 1.2rem;
   height: 100%;
   overflow: hidden;
+  min-height: 0;
+  align-items: start;
 }
 
 .stats-cards {
@@ -728,14 +730,22 @@ onMounted(async () => {
   box-shadow: 0 4px 16px rgba(0, 212, 255, 0.1);
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .pie-chart-section {
   height: 100%;
+  min-height: 200px;
+  max-height: calc(100% - 1rem);
 }
 
 .bar-chart-section {
-  height: 100%;
+  height: 200px;
+  min-height: 200px;
+  max-height: 200px;
 }
 
 .section-title {
@@ -754,6 +764,15 @@ onMounted(async () => {
   align-items: center;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
+}
+
+.pie-chart-container {
+  max-height: calc(100% - 2rem);
+}
+
+.bar-chart-container {
+  max-height: calc(100% - 2rem);
 }
 
 .pie-chart-container canvas {
@@ -1177,9 +1196,22 @@ onMounted(async () => {
   }
   
   .left-section {
-    grid-template-rows: 120px auto 180px;
+    grid-template-rows: 120px 1fr 180px;
     height: auto;
     min-height: 500px;
+    gap: 1rem;
+    align-items: start;
+  }
+  
+  .pie-chart-section {
+    min-height: 200px;
+    max-height: calc(100% - 1rem);
+  }
+  
+  .bar-chart-section {
+    height: 180px;
+    min-height: 180px;
+    max-height: 180px;
   }
   
   .center-section {
@@ -1212,9 +1244,22 @@ onMounted(async () => {
   }
   
   .left-section {
-    grid-template-rows: 100px auto 150px;
+    grid-template-rows: 100px 1fr 150px;
     height: auto;
     min-height: 400px;
+    gap: 0.8rem;
+    align-items: start;
+  }
+  
+  .pie-chart-section {
+    min-height: 150px;
+    max-height: calc(100% - 0.8rem);
+  }
+  
+  .bar-chart-section {
+    height: 150px;
+    min-height: 150px;
+    max-height: 150px;
   }
   
   .center-section {
